@@ -8,6 +8,11 @@ on:
     branches: [ "main" ]
   workflow_dispatch:  # permite rodar manualmente pela aba Actions
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
   build-and-test:
     name: Build e Testes
@@ -30,15 +35,31 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install pytest-html
 
       # Passo 4: verifica qualidade/estilo do código
       - name: Lint com flake8
         run: |
-          flake8 src/ tests/ --max-line-length=100
+          flake8 src/ tests/ --max-line-length=
+          
+      - name: Executar testes
+        run: python -m pytest test/ -v --html=report/index.html --self-contained-html
 
       # Passo 5: executa os testes automatizados com o PYTHONPATH configurado
-      - name: Rodar testes
-        env:
-          PYTHONPATH: .
-        run: |
-          pytest tests/ -v
+      - name: Enviar relatorio
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: report
+    deploy:
+      name: deploy
+      needs: build-and-test
+      if: github.ref == 'ref/heads/main'
+      runs-on: ubuntu-latest
+      environment:
+        name: github-pages
+        url: ${{ steps.deployment.outputs.pages_url}}
+      steps:
+        - name: publicar
+          id: deployment
+          uses: actions/deploy-pages@v4
+        
