@@ -12,6 +12,7 @@ permissions:
   pages: write
   id-token: write
 
+
 jobs:
   build-and-test:
     name: Build e Testes
